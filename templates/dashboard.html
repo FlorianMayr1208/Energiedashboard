@@ -139,8 +139,9 @@
                     <th>Datum</th>
                     <th>Strom (kWh)</th>
                     <th>Gas (m³)</th>
-                    <th>Verbrauch Strom</th>
-                    <th>Verbrauch Gas</th>
+                    <th>Gas (kWh)</th>
+                    <th>Δ Strom (kWh)</th>
+                    <th>Δ Gas (kWh)</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -174,8 +175,8 @@
                 </div>
                 <div class="stat-card">
                     <h3>🔥 Aktueller Gaszähler</h3>
-                    <div class="stat-value">${letzter.gas}</div>
-                    <div class="stat-label">m³</div>
+                    <div class="stat-value">${letzter.gas} m³</div>
+                    <div class="stat-label">${letzter.gas_kwh} kWh</div>
                 </div>
             `;
 
@@ -188,8 +189,8 @@
                     </div>
                     <div class="stat-card">
                         <h3>🔥 Letzter Gasverbrauch</h3>
-                        <div class="stat-value">${letzter.gas_verbrauch || 0}</div>
-                        <div class="stat-label">m³</div>
+                        <div class="stat-value">${letzter.gas_verbrauch_kwh || 0}</div>
+                        <div class="stat-label">kWh (${letzter.gas_verbrauch_m3 || 0} m³)</div>
                     </div>
                 `;
             }
@@ -203,8 +204,9 @@
                     <td>${e.datum}</td>
                     <td>${e.strom}</td>
                     <td>${e.gas}</td>
+                    <td>${e.gas_kwh}</td>
                     <td>${e.strom_verbrauch || '-'}</td>
-                    <td>${e.gas_verbrauch || '-'}</td>
+                    <td>${e.gas_verbrauch_kwh || '-'}</td>
                 </tr>
             `).join('');
 
@@ -224,8 +226,8 @@
                             tension: 0.4
                         },
                         {
-                            label: 'Gas (m³)',
-                            data: chartData.map(e => e.gas_verbrauch || 0),
+                            label: 'Gas (kWh)',
+                            data: chartData.map(e => e.gas_verbrauch_kwh || 0),
                             borderColor: '#f093fb',
                             backgroundColor: 'rgba(240, 147, 251, 0.1)',
                             tension: 0.4

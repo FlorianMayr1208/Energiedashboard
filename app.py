@@ -8,6 +8,10 @@ app = Flask(__name__)
 # Pfad zur JSON-Datei
 DATA_FILE = 'data/verbrauch.json'
 
+# Gas-Umrechnung: m³ → kWh
+BRENNWERT = 11.493  # kWh/m³
+ZUSTANDSZAHL = 0.947
+
 def init_data_file():
     """Erstellt die JSON-Datei, falls sie nicht existiert"""
     os.makedirs('data', exist_ok=True)
@@ -59,16 +63,32 @@ def get_daten():
 
     # Berechne Verbrauch zwischen Einträgen
     eintraege = data['eintraege']
+
+    # Rechne Gas m³ in kWh um
+    for eintrag in eintraege:
+        eintrag['gas_kwh'] = round(eintrag['gas'] * BRENNWERT * ZUSTANDSZAHL, 2)
+
     if len(eintraege) > 1:
         for i in range(len(eintraege)-1, 0, -1):
             eintraege[i]['strom_verbrauch'] = round(
                 eintraege[i]['strom'] - eintraege[i-1]['strom'], 2
             )
-            eintraege[i]['gas_verbrauch'] = round(
+            eintraege[i]['gas_verbrauch_m3'] = round(
                 eintraege[i]['gas'] - eintraege[i-1]['gas'], 2
+            )
+            eintraege[i]['gas_verbrauch_kwh'] = round(
+                eintraege[i]['gas_verbrauch_m3'] * BRENNWERT * ZUSTANDSZAHL, 2
             )
 
     return jsonify(data)
+
+@app.route('/api/config')
+def get_config():
+    """API Endpoint für Konfigurationswerte"""
+    return jsonify({
+        'brennwert': BRENNWERT,
+        'zustandszahl': ZUSTANDSZAHL
+    })
 
 @app.route('/manifest.json')
 def manifest():
