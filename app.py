@@ -47,8 +47,8 @@ def speichern():
 
     eintrag = {
         'datum': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'strom': float(request.json['strom']),
-        'gas': float(request.json['gas'])
+        'strom': float(request.json['strom']) if 'strom' in request.json and request.json['strom'] else None,
+        'gas': float(request.json['gas']) if 'gas' in request.json and request.json['gas'] else None
     }
 
     data['eintraege'].append(eintrag)
@@ -64,23 +64,51 @@ def get_daten():
     # Berechne Verbrauch zwischen Einträgen
     eintraege = data['eintraege']
 
-    # Rechne Gas m³ in kWh um
-    for eintrag in eintraege:
-        eintrag['gas_kwh'] = round(eintrag['gas'] * BRENNWERT * ZUSTANDSZAHL, 2)
+    # Rechne Gas m³ in kWh um (nur wenn Gas-Wert vorhanden)
+    for i, eintrag in enumerate(eintraege):
+        if eintrag.get('gas') is not None:
+            eintrag['gas_kwh'] = round(eintrag['gas'] * BRENNWERT * ZUSTANDSZAHL, 2)
+        else:
+            eintrag['gas_kwh'] = None
+
+        # Füge Index hinzu für Lösch-Funktion
+        eintrag['index'] = i
 
     if len(eintraege) > 1:
         for i in range(len(eintraege)-1, 0, -1):
-            eintraege[i]['strom_verbrauch'] = round(
-                eintraege[i]['strom'] - eintraege[i-1]['strom'], 2
-            )
-            eintraege[i]['gas_verbrauch_m3'] = round(
-                eintraege[i]['gas'] - eintraege[i-1]['gas'], 2
-            )
-            eintraege[i]['gas_verbrauch_kwh'] = round(
-                eintraege[i]['gas_verbrauch_m3'] * BRENNWERT * ZUSTANDSZAHL, 2
-            )
+            # Strom-Verbrauch berechnen (nur wenn beide Werte vorhanden)
+            if eintraege[i].get('strom') is not None and eintraege[i-1].get('strom') is not None:
+                eintraege[i]['strom_verbrauch'] = round(
+                    eintraege[i]['strom'] - eintraege[i-1]['strom'], 2
+                )
+            else:
+                eintraege[i]['strom_verbrauch'] = None
+
+            # Gas-Verbrauch berechnen (nur wenn beide Werte vorhanden)
+            if eintraege[i].get('gas') is not None and eintraege[i-1].get('gas') is not None:
+                eintraege[i]['gas_verbrauch_m3'] = round(
+                    eintraege[i]['gas'] - eintraege[i-1]['gas'], 2
+                )
+                eintraege[i]['gas_verbrauch_kwh'] = round(
+                    eintraege[i]['gas_verbrauch_m3'] * BRENNWERT * ZUSTANDSZAHL, 2
+                )
+            else:
+                eintraege[i]['gas_verbrauch_m3'] = None
+                eintraege[i]['gas_verbrauch_kwh'] = None
 
     return jsonify(data)
+
+@app.route('/api/loeschen/<int:index>', methods=['DELETE'])
+def loeschen(index):
+    """API Endpoint zum Löschen eines Eintrags"""
+    data = load_data()
+
+    if 0 <= index < len(data['eintraege']):
+        geloeschter_eintrag = data['eintraege'].pop(index)
+        save_data(data)
+        return jsonify({'status': 'success', 'message': 'Eintrag gelöscht!', 'geloescht': geloeschter_eintrag})
+    else:
+        return jsonify({'status': 'error', 'message': 'Ungültiger Index'}), 400
 
 @app.route('/api/config')
 def get_config():

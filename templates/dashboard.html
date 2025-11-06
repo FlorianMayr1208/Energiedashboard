@@ -116,6 +116,20 @@
         tr:hover {
             background: #f9f9f9;
         }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #cc0000;
+        }
     </style>
 </head>
 <body>
@@ -142,6 +156,7 @@
                     <th>Gas (kWh)</th>
                     <th>Δ Strom (kWh)</th>
                     <th>Δ Gas (kWh)</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -149,6 +164,8 @@
     </div>
 
     <script>
+        let chartInstance = null;
+
         async function loadData() {
             const response = await fetch('/api/daten');
             const data = await response.json();
@@ -167,32 +184,47 @@
             const letzter = eintraege[0];
             const vorletzter = eintraege[1];
 
-            let statsHTML = `
-                <div class="stat-card">
-                    <h3>🔌 Aktueller Stromzähler</h3>
-                    <div class="stat-value">${letzter.strom}</div>
-                    <div class="stat-label">kWh</div>
-                </div>
-                <div class="stat-card">
-                    <h3>🔥 Aktueller Gaszähler</h3>
-                    <div class="stat-value">${letzter.gas} m³</div>
-                    <div class="stat-label">${letzter.gas_kwh} kWh</div>
-                </div>
-            `;
+            let statsHTML = '';
 
-            if (vorletzter) {
+            if (letzter.strom !== null) {
                 statsHTML += `
                     <div class="stat-card">
-                        <h3>⚡ Letzter Stromverbrauch</h3>
-                        <div class="stat-value">${letzter.strom_verbrauch || 0}</div>
+                        <h3>🔌 Aktueller Stromzähler</h3>
+                        <div class="stat-value">${letzter.strom}</div>
                         <div class="stat-label">kWh</div>
                     </div>
+                `;
+            }
+
+            if (letzter.gas !== null) {
+                statsHTML += `
                     <div class="stat-card">
-                        <h3>🔥 Letzter Gasverbrauch</h3>
-                        <div class="stat-value">${letzter.gas_verbrauch_kwh || 0}</div>
-                        <div class="stat-label">kWh (${letzter.gas_verbrauch_m3 || 0} m³)</div>
+                        <h3>🔥 Aktueller Gaszähler</h3>
+                        <div class="stat-value">${letzter.gas} m³</div>
+                        <div class="stat-label">${letzter.gas_kwh} kWh</div>
                     </div>
                 `;
+            }
+
+            if (vorletzter) {
+                if (letzter.strom_verbrauch !== null) {
+                    statsHTML += `
+                        <div class="stat-card">
+                            <h3>⚡ Letzter Stromverbrauch</h3>
+                            <div class="stat-value">${letzter.strom_verbrauch}</div>
+                            <div class="stat-label">kWh</div>
+                        </div>
+                    `;
+                }
+                if (letzter.gas_verbrauch_kwh !== null) {
+                    statsHTML += `
+                        <div class="stat-card">
+                            <h3>🔥 Letzter Gasverbrauch</h3>
+                            <div class="stat-value">${letzter.gas_verbrauch_kwh}</div>
+                            <div class="stat-label">kWh (${letzter.gas_verbrauch_m3} m³)</div>
+                        </div>
+                    `;
+                }
             }
 
             document.getElementById('stats').innerHTML = statsHTML;
@@ -202,35 +234,42 @@
             tbody.innerHTML = eintraege.map(e => `
                 <tr>
                     <td>${e.datum}</td>
-                    <td>${e.strom}</td>
-                    <td>${e.gas}</td>
-                    <td>${e.gas_kwh}</td>
-                    <td>${e.strom_verbrauch || '-'}</td>
-                    <td>${e.gas_verbrauch_kwh || '-'}</td>
+                    <td>${e.strom !== null ? e.strom : '-'}</td>
+                    <td>${e.gas !== null ? e.gas : '-'}</td>
+                    <td>${e.gas_kwh !== null ? e.gas_kwh : '-'}</td>
+                    <td>${e.strom_verbrauch !== null ? e.strom_verbrauch : '-'}</td>
+                    <td>${e.gas_verbrauch_kwh !== null ? e.gas_verbrauch_kwh : '-'}</td>
+                    <td><button class="delete-btn" onclick="deleteEntry(${e.index})">🗑️ Löschen</button></td>
                 </tr>
             `).join('');
 
-            // Chart erstellen
+            // Chart erstellen (altes Chart zerstören falls vorhanden)
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
             const chartData = eintraege.reverse(); // Älteste zuerst für Chart
             const ctx = document.getElementById('verbrauchChart').getContext('2d');
-            new Chart(ctx, {
+            chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: chartData.map(e => e.datum.split(' ')[0]),
                     datasets: [
                         {
                             label: 'Strom (kWh)',
-                            data: chartData.map(e => e.strom_verbrauch || 0),
+                            data: chartData.map(e => e.strom_verbrauch !== null ? e.strom_verbrauch : null),
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            tension: 0.4
+                            tension: 0.4,
+                            spanGaps: true
                         },
                         {
                             label: 'Gas (kWh)',
-                            data: chartData.map(e => e.gas_verbrauch_kwh || 0),
+                            data: chartData.map(e => e.gas_verbrauch_kwh !== null ? e.gas_verbrauch_kwh : null),
                             borderColor: '#f093fb',
                             backgroundColor: 'rgba(240, 147, 251, 0.1)',
-                            tension: 0.4
+                            tension: 0.4,
+                            spanGaps: true
                         }
                     ]
                 },
@@ -248,6 +287,23 @@
                     }
                 }
             });
+        }
+
+        async function deleteEntry(index) {
+            if (!confirm('Möchtest du diesen Eintrag wirklich löschen?')) {
+                return;
+            }
+
+            const response = await fetch(`/api/loeschen/${index}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                // Seite neu laden um aktualisierte Daten anzuzeigen
+                loadData();
+            } else {
+                alert('Fehler beim Löschen!');
+            }
         }
 
         loadData();
