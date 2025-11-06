@@ -34,7 +34,7 @@ pip3 install -r requirements.txt
 python3 app.py
 ```
 
-Die App läuft jetzt auf: `http://localhost:5000`
+Die App läuft jetzt auf: `http://localhost:5001`
 
 ### 3. Von anderen Geräten zugreifen
 
@@ -43,18 +43,18 @@ Finde die IP-Adresse deines Raspberry Pi:
 hostname -I
 ```
 
-Greife von deinem Handy zu: `http://192.168.x.x:5000`
+Greife von deinem Handy zu: `http://192.168.x.x:5001`
 
 ## 📱 Als App auf dem Handy installieren
 
 ### iOS (Safari):
-1. Öffne `http://deine-pi-ip:5000/eingabe` in Safari
+1. Öffne `http://deine-pi-ip:5001/eingabe` in Safari
 2. Tippe auf den "Teilen"-Button
 3. Scrolle runter und wähle "Zum Home-Bildschirm"
 4. Bestätige mit "Hinzufügen"
 
 ### Android (Chrome):
-1. Öffne `http://deine-pi-ip:5000/eingabe` in Chrome
+1. Öffne `http://deine-pi-ip:5001/eingabe` in Chrome
 2. Tippe auf die drei Punkte (Menü)
 3. Wähle "App installieren" oder "Zum Startbildschirm hinzufügen"
 
@@ -140,7 +140,7 @@ Für Produktivbetrieb:
 
 ## 🐛 Probleme?
 
-- **App nicht erreichbar?** Prüfe die Firewall: `sudo ufw allow 5000`
+- **App nicht erreichbar?** Prüfe die Firewall: `sudo ufw allow 5001`
 - **Fehler beim Start?** Prüfe die Logs: `python3 app.py`
 - **Daten weg?** Schau in `data/verbrauch.json`
 
