@@ -299,8 +299,8 @@
             });
 
             if (response.ok) {
-                // Seite neu laden um aktualisierte Daten anzuzeigen
-                loadData();
+                // Seite vollständig neu laden
+                location.reload();
             } else {
                 alert('Fehler beim Löschen!');
             }
