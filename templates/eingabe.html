@@ -129,12 +129,12 @@
         <form id="eingabeForm">
             <div class="input-group">
                 <label for="strom">🔌 Stromzähler (kWh)</label>
-                <input type="number" id="strom" step="0.01" required inputmode="decimal">
+                <input type="text" id="strom" pattern="[0-9]+([.,][0-9]+)?" required inputmode="decimal" placeholder="z.B. 12345,67">
             </div>
 
             <div class="input-group">
                 <label for="gas">🔥 Gaszähler (m³)</label>
-                <input type="number" id="gas" step="0.01" required inputmode="decimal">
+                <input type="text" id="gas" pattern="[0-9]+([.,][0-9]+)?" required inputmode="decimal" placeholder="z.B. 6789,12">
                 <div class="info">Wird automatisch in kWh umgerechnet</div>
             </div>
 
@@ -148,8 +148,9 @@
         document.getElementById('eingabeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const strom = document.getElementById('strom').value;
-            const gas = document.getElementById('gas').value;
+            // Komma durch Punkt ersetzen für deutsche Eingabe
+            const strom = document.getElementById('strom').value.replace(',', '.');
+            const gas = document.getElementById('gas').value.replace(',', '.');
 
             const response = await fetch('/api/speichern', {
                 method: 'POST',
