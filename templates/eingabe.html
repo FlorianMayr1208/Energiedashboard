@@ -128,6 +128,12 @@
 
         <form id="eingabeForm">
             <div class="input-group">
+                <label for="datum">📅 Datum/Uhrzeit - Optional</label>
+                <input type="datetime-local" id="datum">
+                <div class="info">Leer lassen für aktuelles Datum</div>
+            </div>
+
+            <div class="input-group">
                 <label for="strom">🔌 Stromzähler (kWh) - Optional</label>
                 <input type="text" id="strom" pattern="[0-9]+([.,][0-9]+)?" inputmode="decimal" placeholder="z.B. 12345,67">
             </div>
@@ -151,6 +157,7 @@
             // Komma durch Punkt ersetzen für deutsche Eingabe
             const stromValue = document.getElementById('strom').value.trim();
             const gasValue = document.getElementById('gas').value.trim();
+            const datumValue = document.getElementById('datum').value;
 
             // Mindestens ein Wert muss eingegeben sein
             if (!stromValue && !gasValue) {
@@ -161,6 +168,7 @@
             const data = {};
             if (stromValue) data.strom = stromValue.replace(',', '.');
             if (gasValue) data.gas = gasValue.replace(',', '.');
+            if (datumValue) data.datum = datumValue;
 
             const response = await fetch('/api/speichern', {
                 method: 'POST',

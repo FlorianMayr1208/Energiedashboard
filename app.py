@@ -67,13 +67,32 @@ def speichern():
     """API Endpoint zum Speichern neuer Zählerstände"""
     data = load_data()
 
+    # Datum verwenden: entweder vom User oder aktuell
+    if 'datum' in request.json and request.json['datum']:
+        # Datum von datetime-local Input kommt im Format: 2023-03-17T14:30
+        datum_str = request.json['datum']
+        try:
+            # Parse ISO format und konvertiere zu unserem Format
+            datum_obj = datetime.fromisoformat(datum_str)
+            datum_formatted = datum_obj.strftime('%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            # Falls Parsing fehlschlägt, verwende aktuelles Datum
+            datum_formatted = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        # Kein Datum übergeben, verwende aktuelles
+        datum_formatted = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     eintrag = {
-        'datum': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'datum': datum_formatted,
         'strom': float(request.json['strom']) if 'strom' in request.json and request.json['strom'] else None,
         'gas': float(request.json['gas']) if 'gas' in request.json and request.json['gas'] else None
     }
 
     data['eintraege'].append(eintrag)
+
+    # Sortiere Einträge nach Datum (älteste zuerst)
+    data['eintraege'].sort(key=lambda x: x['datum'])
+
     save_data(data)
 
     return jsonify({'status': 'success', 'message': 'Daten gespeichert!'})
