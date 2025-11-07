@@ -130,6 +130,38 @@
         .delete-btn:hover {
             background: #cc0000;
         }
+
+        .vergleich-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .vergleich-info h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .vergleich-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .vergleich-highlight {
+            font-weight: bold;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .vergleich-better {
+            color: #4CAF50;
+        }
+
+        .vergleich-worse {
+            color: #ff4444;
+        }
     </style>
 </head>
 <body>
@@ -143,6 +175,12 @@
     <div class="chart-container">
         <h2>Verbrauchsverlauf</h2>
         <canvas id="verbrauchChart"></canvas>
+    </div>
+
+    <div class="chart-container" id="vergleichContainer" style="display: none;">
+        <h2>📊 Historischer Vergleich - Stromverbrauch</h2>
+        <div id="vergleichStats" style="margin-bottom: 20px;"></div>
+        <canvas id="vergleichChart"></canvas>
     </div>
 
     <div class="table-container">
@@ -306,7 +344,78 @@
             }
         }
 
+        async function loadVergleich() {
+            const response = await fetch('/api/vergleich');
+            const data = await response.json();
+
+            // Zeige Vergleich nur wenn aktuelle Daten vorhanden sind
+            if (data.aktuell.tage > 0) {
+                document.getElementById('vergleichContainer').style.display = 'block';
+
+                const aktuell = data.aktuell;
+                const histDurchschnitt = data.historischer_durchschnitt;
+                const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
+                const prozent = ((differenz / histDurchschnitt) * 100).toFixed(1);
+
+                const besserOderSchlechter = differenz < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeil = differenz < 0 ? '↓' : '↑';
+                const verbesserung = differenz < 0 ? 'weniger' : 'mehr';
+
+                // Vergleichsstatistiken
+                let statsHTML = `
+                    <div class="vergleich-info">
+                        <h3>Aktueller Zeitraum</h3>
+                        <p><strong>${aktuell.zeitraum}</strong></p>
+                        <p>Verbrauch: <span class="vergleich-highlight">${aktuell.durchschnitt_tag} kWh/Tag</span> (${aktuell.gesamt_kwh} kWh in ${aktuell.tage} Tagen)</p>
+                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
+                    </div>
+                `;
+
+                document.getElementById('vergleichStats').innerHTML = statsHTML;
+
+                // Balkendiagramm erstellen
+                const ctx = document.getElementById('vergleichChart').getContext('2d');
+
+                const labels = [...data.historisch.map(h => h.zeitraum), 'Aktuell'];
+                const werte = [...data.historisch.map(h => h.durchschnitt_tag), aktuell.durchschnitt_tag];
+                const farben = [...data.historisch.map(() => 'rgba(102, 126, 234, 0.7)'), 'rgba(76, 175, 80, 0.7)'];
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Durchschnitt kWh/Tag',
+                            data: werte,
+                            backgroundColor: farben,
+                            borderColor: farben.map(c => c.replace('0.7', '1')),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'kWh pro Tag'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         loadData();
+        loadVergleich();
     </script>
 </body>
 </html>

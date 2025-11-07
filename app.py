@@ -12,6 +12,28 @@ DATA_FILE = 'data/verbrauch.json'
 BRENNWERT = 11.493  # kWh/m³
 ZUSTANDSZAHL = 0.947
 
+# Historische Verbrauchsdaten für Vergleich
+HISTORISCHE_DATEN = [
+    {
+        'zeitraum': '23.03.2022 - 06.03.2023',
+        'verbrauch_kwh': 1448.00,
+        'tage': 349,
+        'durchschnitt_tag': 4.15
+    },
+    {
+        'zeitraum': '07.03.2023 - 17.03.2024',
+        'verbrauch_kwh': 1547.00,
+        'tage': 377,
+        'durchschnitt_tag': 4.10
+    },
+    {
+        'zeitraum': '18.03.2024 - 17.03.2025',
+        'verbrauch_kwh': 1591.01,
+        'tage': 365,
+        'durchschnitt_tag': 4.36
+    }
+]
+
 def init_data_file():
     """Erstellt die JSON-Datei, falls sie nicht existiert"""
     os.makedirs('data', exist_ok=True)
@@ -116,6 +138,56 @@ def get_config():
     return jsonify({
         'brennwert': BRENNWERT,
         'zustandszahl': ZUSTANDSZAHL
+    })
+
+@app.route('/api/vergleich')
+def get_vergleich():
+    """API Endpoint für Vergleich mit historischen Daten"""
+    data = load_data()
+    eintraege = data['eintraege']
+
+    # Berechne aktuellen Verbrauch (nur Strom)
+    aktueller_verbrauch = {
+        'gesamt_kwh': 0,
+        'tage': 0,
+        'durchschnitt_tag': 0,
+        'zeitraum': None
+    }
+
+    if len(eintraege) >= 2:
+        # Finde erste und letzte Einträge mit Strom-Werten
+        strom_eintraege = [e for e in eintraege if e.get('strom') is not None]
+
+        if len(strom_eintraege) >= 2:
+            erster = strom_eintraege[0]
+            letzter = strom_eintraege[-1]
+
+            # Parse Datum
+            from datetime import datetime
+            datum_erster = datetime.strptime(erster['datum'], '%Y-%m-%d %H:%M:%S')
+            datum_letzter = datetime.strptime(letzter['datum'], '%Y-%m-%d %H:%M:%S')
+
+            tage = (datum_letzter - datum_erster).days
+            verbrauch = letzter['strom'] - erster['strom']
+
+            if tage > 0:
+                aktueller_verbrauch = {
+                    'gesamt_kwh': round(verbrauch, 2),
+                    'tage': tage,
+                    'durchschnitt_tag': round(verbrauch / tage, 2),
+                    'zeitraum': f"{datum_erster.strftime('%d.%m.%Y')} - {datum_letzter.strftime('%d.%m.%Y')}"
+                }
+
+    # Berechne historischen Durchschnitt
+    if HISTORISCHE_DATEN:
+        hist_durchschnitt = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN) / len(HISTORISCHE_DATEN)
+    else:
+        hist_durchschnitt = 0
+
+    return jsonify({
+        'historisch': HISTORISCHE_DATEN,
+        'historischer_durchschnitt': round(hist_durchschnitt, 2),
+        'aktuell': aktueller_verbrauch
     })
 
 @app.route('/manifest.json')
