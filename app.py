@@ -254,26 +254,36 @@ def get_vergleich():
                 }
 
     # Berechne historischen Durchschnitt Strom
+    hist_durchschnitt_strom_gesamt = 0
+    hist_durchschnitt_strom_vorjahr = 0
+
     if HISTORISCHE_DATEN_STROM:
-        hist_durchschnitt_strom = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_STROM) / len(HISTORISCHE_DATEN_STROM)
-    else:
-        hist_durchschnitt_strom = 0
+        hist_durchschnitt_strom_gesamt = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_STROM) / len(HISTORISCHE_DATEN_STROM)
+        # Vorjahr = letzter Eintrag
+        hist_durchschnitt_strom_vorjahr = HISTORISCHE_DATEN_STROM[-1]['durchschnitt_tag']
 
     # Berechne historischen Durchschnitt Gas
+    hist_durchschnitt_gas_gesamt = 0
+    hist_durchschnitt_gas_vorjahr = 0
+
     if HISTORISCHE_DATEN_GAS:
-        hist_durchschnitt_gas = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_GAS) / len(HISTORISCHE_DATEN_GAS)
-    else:
-        hist_durchschnitt_gas = 0
+        hist_durchschnitt_gas_gesamt = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_GAS) / len(HISTORISCHE_DATEN_GAS)
+        # Vorjahr = letzter Eintrag
+        hist_durchschnitt_gas_vorjahr = HISTORISCHE_DATEN_GAS[-1]['durchschnitt_tag']
 
     return jsonify({
         'strom': {
             'historisch': HISTORISCHE_DATEN_STROM,
-            'historischer_durchschnitt': round(hist_durchschnitt_strom, 2),
+            'historischer_durchschnitt_gesamt': round(hist_durchschnitt_strom_gesamt, 2),
+            'historischer_durchschnitt_vorjahr': round(hist_durchschnitt_strom_vorjahr, 2),
+            'vorjahr_zeitraum': HISTORISCHE_DATEN_STROM[-1]['zeitraum'] if HISTORISCHE_DATEN_STROM else None,
             'aktuell': aktueller_verbrauch_strom
         },
         'gas': {
             'historisch': HISTORISCHE_DATEN_GAS,
-            'historischer_durchschnitt': round(hist_durchschnitt_gas, 2),
+            'historischer_durchschnitt_gesamt': round(hist_durchschnitt_gas_gesamt, 2),
+            'historischer_durchschnitt_vorjahr': round(hist_durchschnitt_gas_vorjahr, 2),
+            'vorjahr_zeitraum': HISTORISCHE_DATEN_GAS[-1]['zeitraum'] if HISTORISCHE_DATEN_GAS else None,
             'aktuell': aktueller_verbrauch_gas
         }
     })

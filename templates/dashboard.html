@@ -365,13 +365,23 @@
             // STROM VERGLEICH
             if (data.strom.aktuell.tage > 0) {
                 const aktuell = data.strom.aktuell;
-                const histDurchschnitt = data.strom.historischer_durchschnitt;
-                const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
-                const prozent = histDurchschnitt > 0 ? ((differenz / histDurchschnitt) * 100).toFixed(1) : 0;
+                const vorjahrDurchschnitt = data.strom.historischer_durchschnitt_vorjahr;
+                const langzeitDurchschnitt = data.strom.historischer_durchschnitt_gesamt;
+                const vorjahrZeitraum = data.strom.vorjahr_zeitraum;
 
-                const besserOderSchlechter = differenz < 0 ? 'vergleich-better' : 'vergleich-worse';
-                const pfeil = differenz < 0 ? '↓' : '↑';
-                const verbesserung = differenz < 0 ? 'weniger' : 'mehr';
+                // Vergleich mit Vorjahr
+                const differenzVorjahr = aktuell.durchschnitt_tag - vorjahrDurchschnitt;
+                const prozentVorjahr = vorjahrDurchschnitt > 0 ? ((differenzVorjahr / vorjahrDurchschnitt) * 100).toFixed(1) : 0;
+                const besserOderSchlechterVorjahr = differenzVorjahr < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeilVorjahr = differenzVorjahr < 0 ? '↓' : '↑';
+                const verbesserungVorjahr = differenzVorjahr < 0 ? 'weniger' : 'mehr';
+
+                // Vergleich mit Langzeit-Durchschnitt
+                const differenzLangzeit = aktuell.durchschnitt_tag - langzeitDurchschnitt;
+                const prozentLangzeit = langzeitDurchschnitt > 0 ? ((differenzLangzeit / langzeitDurchschnitt) * 100).toFixed(1) : 0;
+                const besserOderSchlechterLangzeit = differenzLangzeit < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeilLangzeit = differenzLangzeit < 0 ? '↓' : '↑';
+                const verbesserungLangzeit = differenzLangzeit < 0 ? 'weniger' : 'mehr';
 
                 // Vergleichsstatistiken Strom
                 let statsHTML = `
@@ -381,10 +391,21 @@
                         <p>Verbrauch: <span class="vergleich-highlight">${aktuell.durchschnitt_tag} kWh/Tag</span> (${aktuell.gesamt_kwh} kWh in ${aktuell.tage} Tagen)</p>
                 `;
 
-                if (histDurchschnitt > 0) {
+                if (vorjahrDurchschnitt > 0) {
                     statsHTML += `
-                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
-                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <p><strong>📊 Vergleich mit Vorjahr (${vorjahrZeitraum}):</strong></p>
+                        <p>Vorjahr: <strong>${vorjahrDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechterVorjahr}"><strong>${pfeilVorjahr} ${Math.abs(differenzVorjahr).toFixed(2)} kWh/Tag ${verbesserungVorjahr} (${Math.abs(prozentVorjahr)}%)</strong></p>
+                    `;
+                }
+
+                if (langzeitDurchschnitt > 0) {
+                    statsHTML += `
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <p><strong>📈 Langzeit-Durchschnitt (${data.strom.historisch.length} Jahre):</strong></p>
+                        <p>Durchschnitt: <strong>${langzeitDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechterLangzeit}"><strong>${pfeilLangzeit} ${Math.abs(differenzLangzeit).toFixed(2)} kWh/Tag ${verbesserungLangzeit} (${Math.abs(prozentLangzeit)}%)</strong></p>
                     `;
                 }
 
@@ -435,13 +456,23 @@
             // GAS VERGLEICH
             if (data.gas.aktuell.tage > 0) {
                 const aktuell = data.gas.aktuell;
-                const histDurchschnitt = data.gas.historischer_durchschnitt;
-                const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
-                const prozent = histDurchschnitt > 0 ? ((differenz / histDurchschnitt) * 100).toFixed(1) : 0;
+                const vorjahrDurchschnitt = data.gas.historischer_durchschnitt_vorjahr;
+                const langzeitDurchschnitt = data.gas.historischer_durchschnitt_gesamt;
+                const vorjahrZeitraum = data.gas.vorjahr_zeitraum;
 
-                const besserOderSchlechter = differenz < 0 ? 'vergleich-better' : 'vergleich-worse';
-                const pfeil = differenz < 0 ? '↓' : '↑';
-                const verbesserung = differenz < 0 ? 'weniger' : 'mehr';
+                // Vergleich mit Vorjahr
+                const differenzVorjahr = aktuell.durchschnitt_tag - vorjahrDurchschnitt;
+                const prozentVorjahr = vorjahrDurchschnitt > 0 ? ((differenzVorjahr / vorjahrDurchschnitt) * 100).toFixed(1) : 0;
+                const besserOderSchlechterVorjahr = differenzVorjahr < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeilVorjahr = differenzVorjahr < 0 ? '↓' : '↑';
+                const verbesserungVorjahr = differenzVorjahr < 0 ? 'weniger' : 'mehr';
+
+                // Vergleich mit Langzeit-Durchschnitt
+                const differenzLangzeit = aktuell.durchschnitt_tag - langzeitDurchschnitt;
+                const prozentLangzeit = langzeitDurchschnitt > 0 ? ((differenzLangzeit / langzeitDurchschnitt) * 100).toFixed(1) : 0;
+                const besserOderSchlechterLangzeit = differenzLangzeit < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeilLangzeit = differenzLangzeit < 0 ? '↓' : '↑';
+                const verbesserungLangzeit = differenzLangzeit < 0 ? 'weniger' : 'mehr';
 
                 // Vergleichsstatistiken Gas
                 let statsHTML = `
@@ -451,10 +482,21 @@
                         <p>Verbrauch: <span class="vergleich-highlight">${aktuell.durchschnitt_tag} kWh/Tag</span> (${aktuell.gesamt_kwh} kWh / ${aktuell.gesamt_m3} m³ in ${aktuell.tage} Tagen)</p>
                 `;
 
-                if (histDurchschnitt > 0) {
+                if (vorjahrDurchschnitt > 0) {
                     statsHTML += `
-                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
-                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <p><strong>📊 Vergleich mit Vorjahr (${vorjahrZeitraum}):</strong></p>
+                        <p>Vorjahr: <strong>${vorjahrDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechterVorjahr}"><strong>${pfeilVorjahr} ${Math.abs(differenzVorjahr).toFixed(2)} kWh/Tag ${verbesserungVorjahr} (${Math.abs(prozentVorjahr)}%)</strong></p>
+                    `;
+                }
+
+                if (langzeitDurchschnitt > 0) {
+                    statsHTML += `
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <p><strong>📈 Langzeit-Durchschnitt (${data.gas.historisch.length} Jahre):</strong></p>
+                        <p>Durchschnitt: <strong>${langzeitDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechterLangzeit}"><strong>${pfeilLangzeit} ${Math.abs(differenzLangzeit).toFixed(2)} kWh/Tag ${verbesserungLangzeit} (${Math.abs(prozentLangzeit)}%)</strong></p>
                     `;
                 }
 
