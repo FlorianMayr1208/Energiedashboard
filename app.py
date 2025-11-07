@@ -13,7 +13,7 @@ BRENNWERT = 11.493  # kWh/m³
 ZUSTANDSZAHL = 0.947
 
 # Historische Verbrauchsdaten für Vergleich
-HISTORISCHE_DATEN = [
+HISTORISCHE_DATEN_STROM = [
     {
         'zeitraum': '23.03.2022 - 06.03.2023',
         'verbrauch_kwh': 1448.00,
@@ -32,6 +32,18 @@ HISTORISCHE_DATEN = [
         'tage': 365,
         'durchschnitt_tag': 4.36
     }
+]
+
+# Historische Gasverbrauchsdaten (in kWh nach Umrechnung)
+# Füge hier deine Gas-Daten hinzu!
+HISTORISCHE_DATEN_GAS = [
+    # Beispiel:
+    # {
+    #     'zeitraum': '23.03.2022 - 06.03.2023',
+    #     'verbrauch_kwh': 15000.00,
+    #     'tage': 349,
+    #     'durchschnitt_tag': 42.98
+    # },
 ]
 
 def init_data_file():
@@ -165,8 +177,8 @@ def get_vergleich():
     data = load_data()
     eintraege = data['eintraege']
 
-    # Berechne aktuellen Verbrauch (nur Strom)
-    aktueller_verbrauch = {
+    # Berechne aktuellen Stromverbrauch
+    aktueller_verbrauch_strom = {
         'gesamt_kwh': 0,
         'tage': 0,
         'durchschnitt_tag': 0,
@@ -190,23 +202,70 @@ def get_vergleich():
             verbrauch = letzter['strom'] - erster['strom']
 
             if tage > 0:
-                aktueller_verbrauch = {
+                aktueller_verbrauch_strom = {
                     'gesamt_kwh': round(verbrauch, 2),
                     'tage': tage,
                     'durchschnitt_tag': round(verbrauch / tage, 2),
                     'zeitraum': f"{datum_erster.strftime('%d.%m.%Y')} - {datum_letzter.strftime('%d.%m.%Y')}"
                 }
 
-    # Berechne historischen Durchschnitt
-    if HISTORISCHE_DATEN:
-        hist_durchschnitt = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN) / len(HISTORISCHE_DATEN)
+    # Berechne aktuellen Gasverbrauch (in kWh)
+    aktueller_verbrauch_gas = {
+        'gesamt_kwh': 0,
+        'tage': 0,
+        'durchschnitt_tag': 0,
+        'zeitraum': None
+    }
+
+    if len(eintraege) >= 2:
+        # Finde erste und letzte Einträge mit Gas-Werten
+        gas_eintraege = [e for e in eintraege if e.get('gas') is not None]
+
+        if len(gas_eintraege) >= 2:
+            erster = gas_eintraege[0]
+            letzter = gas_eintraege[-1]
+
+            # Parse Datum
+            from datetime import datetime
+            datum_erster = datetime.strptime(erster['datum'], '%Y-%m-%d %H:%M:%S')
+            datum_letzter = datetime.strptime(letzter['datum'], '%Y-%m-%d %H:%M:%S')
+
+            tage = (datum_letzter - datum_erster).days
+            verbrauch_m3 = letzter['gas'] - erster['gas']
+            verbrauch_kwh = verbrauch_m3 * BRENNWERT * ZUSTANDSZAHL
+
+            if tage > 0:
+                aktueller_verbrauch_gas = {
+                    'gesamt_kwh': round(verbrauch_kwh, 2),
+                    'gesamt_m3': round(verbrauch_m3, 2),
+                    'tage': tage,
+                    'durchschnitt_tag': round(verbrauch_kwh / tage, 2),
+                    'zeitraum': f"{datum_erster.strftime('%d.%m.%Y')} - {datum_letzter.strftime('%d.%m.%Y')}"
+                }
+
+    # Berechne historischen Durchschnitt Strom
+    if HISTORISCHE_DATEN_STROM:
+        hist_durchschnitt_strom = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_STROM) / len(HISTORISCHE_DATEN_STROM)
     else:
-        hist_durchschnitt = 0
+        hist_durchschnitt_strom = 0
+
+    # Berechne historischen Durchschnitt Gas
+    if HISTORISCHE_DATEN_GAS:
+        hist_durchschnitt_gas = sum(d['durchschnitt_tag'] for d in HISTORISCHE_DATEN_GAS) / len(HISTORISCHE_DATEN_GAS)
+    else:
+        hist_durchschnitt_gas = 0
 
     return jsonify({
-        'historisch': HISTORISCHE_DATEN,
-        'historischer_durchschnitt': round(hist_durchschnitt, 2),
-        'aktuell': aktueller_verbrauch
+        'strom': {
+            'historisch': HISTORISCHE_DATEN_STROM,
+            'historischer_durchschnitt': round(hist_durchschnitt_strom, 2),
+            'aktuell': aktueller_verbrauch_strom
+        },
+        'gas': {
+            'historisch': HISTORISCHE_DATEN_GAS,
+            'historischer_durchschnitt': round(hist_durchschnitt_gas, 2),
+            'aktuell': aktueller_verbrauch_gas
+        }
     })
 
 @app.route('/manifest.json')

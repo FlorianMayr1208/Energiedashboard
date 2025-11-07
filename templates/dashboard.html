@@ -177,14 +177,24 @@
         <canvas id="verbrauchChart"></canvas>
     </div>
 
-    <div class="chart-container" id="vergleichContainer">
+    <div class="chart-container" id="vergleichContainerStrom">
         <h2>📊 Historischer Vergleich - Stromverbrauch</h2>
-        <div id="vergleichStats" style="margin-bottom: 20px;">
+        <div id="vergleichStatsStrom" style="margin-bottom: 20px;">
             <div class="vergleich-info">
                 <p style="color: #999;">Trage mindestens 2 Stromzählerstände ein, um den Vergleich zu sehen...</p>
             </div>
         </div>
-        <canvas id="vergleichChart" style="display: none;"></canvas>
+        <canvas id="vergleichChartStrom" style="display: none;"></canvas>
+    </div>
+
+    <div class="chart-container" id="vergleichContainerGas">
+        <h2>🔥 Historischer Vergleich - Gasverbrauch</h2>
+        <div id="vergleichStatsGas" style="margin-bottom: 20px;">
+            <div class="vergleich-info">
+                <p style="color: #999;">Trage mindestens 2 Gaszählerstände ein, um den Vergleich zu sehen...</p>
+            </div>
+        </div>
+        <canvas id="vergleichChartGas" style="display: none;"></canvas>
     </div>
 
     <div class="table-container">
@@ -352,47 +362,123 @@
             const response = await fetch('/api/vergleich');
             const data = await response.json();
 
-            // Zeige Vergleich nur wenn aktuelle Daten vorhanden sind
-            if (data.aktuell.tage > 0) {
-                const aktuell = data.aktuell;
-                const histDurchschnitt = data.historischer_durchschnitt;
+            // STROM VERGLEICH
+            if (data.strom.aktuell.tage > 0) {
+                const aktuell = data.strom.aktuell;
+                const histDurchschnitt = data.strom.historischer_durchschnitt;
                 const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
-                const prozent = ((differenz / histDurchschnitt) * 100).toFixed(1);
+                const prozent = histDurchschnitt > 0 ? ((differenz / histDurchschnitt) * 100).toFixed(1) : 0;
 
                 const besserOderSchlechter = differenz < 0 ? 'vergleich-better' : 'vergleich-worse';
                 const pfeil = differenz < 0 ? '↓' : '↑';
                 const verbesserung = differenz < 0 ? 'weniger' : 'mehr';
 
-                // Vergleichsstatistiken
+                // Vergleichsstatistiken Strom
                 let statsHTML = `
                     <div class="vergleich-info">
                         <h3>Aktueller Zeitraum</h3>
                         <p><strong>${aktuell.zeitraum}</strong></p>
                         <p>Verbrauch: <span class="vergleich-highlight">${aktuell.durchschnitt_tag} kWh/Tag</span> (${aktuell.gesamt_kwh} kWh in ${aktuell.tage} Tagen)</p>
-                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
-                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
-                    </div>
                 `;
 
-                document.getElementById('vergleichStats').innerHTML = statsHTML;
-                document.getElementById('vergleichChart').style.display = 'block';
+                if (histDurchschnitt > 0) {
+                    statsHTML += `
+                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
+                    `;
+                }
 
-                // Balkendiagramm erstellen
-                const ctx = document.getElementById('vergleichChart').getContext('2d');
+                statsHTML += `</div>`;
 
-                const labels = [...data.historisch.map(h => h.zeitraum), 'Aktuell'];
-                const werte = [...data.historisch.map(h => h.durchschnitt_tag), aktuell.durchschnitt_tag];
-                const farben = [...data.historisch.map(() => 'rgba(102, 126, 234, 0.7)'), 'rgba(76, 175, 80, 0.7)'];
+                document.getElementById('vergleichStatsStrom').innerHTML = statsHTML;
+                document.getElementById('vergleichChartStrom').style.display = 'block';
 
-                new Chart(ctx, {
+                // Balkendiagramm Strom erstellen
+                const ctxStrom = document.getElementById('vergleichChartStrom').getContext('2d');
+
+                const labelsStrom = [...data.strom.historisch.map(h => h.zeitraum), 'Aktuell'];
+                const werteStrom = [...data.strom.historisch.map(h => h.durchschnitt_tag), aktuell.durchschnitt_tag];
+                const farbenStrom = [...data.strom.historisch.map(() => 'rgba(102, 126, 234, 0.7)'), 'rgba(76, 175, 80, 0.7)'];
+
+                new Chart(ctxStrom, {
                     type: 'bar',
                     data: {
-                        labels: labels,
+                        labels: labelsStrom,
                         datasets: [{
                             label: 'Durchschnitt kWh/Tag',
-                            data: werte,
-                            backgroundColor: farben,
-                            borderColor: farben.map(c => c.replace('0.7', '1')),
+                            data: werteStrom,
+                            backgroundColor: farbenStrom,
+                            borderColor: farbenStrom.map(c => c.replace('0.7', '1')),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'kWh pro Tag'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // GAS VERGLEICH
+            if (data.gas.aktuell.tage > 0) {
+                const aktuell = data.gas.aktuell;
+                const histDurchschnitt = data.gas.historischer_durchschnitt;
+                const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
+                const prozent = histDurchschnitt > 0 ? ((differenz / histDurchschnitt) * 100).toFixed(1) : 0;
+
+                const besserOderSchlechter = differenz < 0 ? 'vergleich-better' : 'vergleich-worse';
+                const pfeil = differenz < 0 ? '↓' : '↑';
+                const verbesserung = differenz < 0 ? 'weniger' : 'mehr';
+
+                // Vergleichsstatistiken Gas
+                let statsHTML = `
+                    <div class="vergleich-info">
+                        <h3>Aktueller Zeitraum</h3>
+                        <p><strong>${aktuell.zeitraum}</strong></p>
+                        <p>Verbrauch: <span class="vergleich-highlight">${aktuell.durchschnitt_tag} kWh/Tag</span> (${aktuell.gesamt_kwh} kWh / ${aktuell.gesamt_m3} m³ in ${aktuell.tage} Tagen)</p>
+                `;
+
+                if (histDurchschnitt > 0) {
+                    statsHTML += `
+                        <p>Historischer Durchschnitt: <strong>${histDurchschnitt} kWh/Tag</strong></p>
+                        <p class="${besserOderSchlechter}"><strong>${pfeil} ${Math.abs(differenz).toFixed(2)} kWh/Tag ${verbesserung} (${Math.abs(prozent)}%)</strong></p>
+                    `;
+                }
+
+                statsHTML += `</div>`;
+
+                document.getElementById('vergleichStatsGas').innerHTML = statsHTML;
+                document.getElementById('vergleichChartGas').style.display = 'block';
+
+                // Balkendiagramm Gas erstellen
+                const ctxGas = document.getElementById('vergleichChartGas').getContext('2d');
+
+                const labelsGas = [...data.gas.historisch.map(h => h.zeitraum), 'Aktuell'];
+                const werteGas = [...data.gas.historisch.map(h => h.durchschnitt_tag), aktuell.durchschnitt_tag];
+                const farbenGas = [...data.gas.historisch.map(() => 'rgba(240, 147, 251, 0.7)'), 'rgba(255, 140, 0, 0.7)'];
+
+                new Chart(ctxGas, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsGas,
+                        datasets: [{
+                            label: 'Durchschnitt kWh/Tag',
+                            data: werteGas,
+                            backgroundColor: farbenGas,
+                            borderColor: farbenGas.map(c => c.replace('0.7', '1')),
                             borderWidth: 2
                         }]
                     },
