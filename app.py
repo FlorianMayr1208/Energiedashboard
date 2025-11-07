@@ -35,15 +35,25 @@ HISTORISCHE_DATEN_STROM = [
 ]
 
 # Historische Gasverbrauchsdaten (in kWh nach Umrechnung)
-# Füge hier deine Gas-Daten hinzu!
 HISTORISCHE_DATEN_GAS = [
-    # Beispiel:
-    # {
-    #     'zeitraum': '23.03.2022 - 06.03.2023',
-    #     'verbrauch_kwh': 15000.00,
-    #     'tage': 349,
-    #     'durchschnitt_tag': 42.98
-    # },
+    {
+        'zeitraum': '23.03.2022 - 06.03.2023',
+        'verbrauch_kwh': 7391.00,
+        'tage': 349,
+        'durchschnitt_tag': 21.18
+    },
+    {
+        'zeitraum': '07.03.2023 - 04.03.2024',
+        'verbrauch_kwh': 7713.00,
+        'tage': 364,
+        'durchschnitt_tag': 21.19
+    },
+    {
+        'zeitraum': '05.03.2024 - 03.03.2025',
+        'verbrauch_kwh': 9719.00,
+        'tage': 364,
+        'durchschnitt_tag': 26.70
+    }
 ]
 
 def init_data_file():
