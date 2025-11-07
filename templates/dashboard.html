@@ -177,10 +177,14 @@
         <canvas id="verbrauchChart"></canvas>
     </div>
 
-    <div class="chart-container" id="vergleichContainer" style="display: none;">
+    <div class="chart-container" id="vergleichContainer">
         <h2>📊 Historischer Vergleich - Stromverbrauch</h2>
-        <div id="vergleichStats" style="margin-bottom: 20px;"></div>
-        <canvas id="vergleichChart"></canvas>
+        <div id="vergleichStats" style="margin-bottom: 20px;">
+            <div class="vergleich-info">
+                <p style="color: #999;">Trage mindestens 2 Stromzählerstände ein, um den Vergleich zu sehen...</p>
+            </div>
+        </div>
+        <canvas id="vergleichChart" style="display: none;"></canvas>
     </div>
 
     <div class="table-container">
@@ -350,8 +354,6 @@
 
             // Zeige Vergleich nur wenn aktuelle Daten vorhanden sind
             if (data.aktuell.tage > 0) {
-                document.getElementById('vergleichContainer').style.display = 'block';
-
                 const aktuell = data.aktuell;
                 const histDurchschnitt = data.historischer_durchschnitt;
                 const differenz = aktuell.durchschnitt_tag - histDurchschnitt;
@@ -373,6 +375,7 @@
                 `;
 
                 document.getElementById('vergleichStats').innerHTML = statsHTML;
+                document.getElementById('vergleichChart').style.display = 'block';
 
                 // Balkendiagramm erstellen
                 const ctx = document.getElementById('vergleichChart').getContext('2d');
