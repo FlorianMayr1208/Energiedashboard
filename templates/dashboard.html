@@ -168,6 +168,30 @@
     <div class="header">
         <h1>📊 Energiedashboard</h1>
         <a href="/eingabe" class="eingabe-link">+ Neue Zählerstände eingeben</a>
+        <button id="installButton" class="eingabe-link" style="display: none; margin-top: 10px;">
+            📱 Als App installieren
+        </button>
+    </div>
+
+    <div id="installInstructions" class="chart-container" style="display: none; margin-bottom: 20px;">
+        <h3>📱 App installieren</h3>
+        <div style="padding: 15px; background: #f9f9f9; border-radius: 10px;">
+            <p><strong>Android / Chrome:</strong></p>
+            <ol style="margin-left: 20px;">
+                <li>Tippe auf die drei Punkte (⋮) oben rechts</li>
+                <li>Wähle "App installieren" oder "Zum Startbildschirm hinzufügen"</li>
+                <li>Bestätige mit "Installieren"</li>
+            </ol>
+            <p style="margin-top: 15px;"><strong>iOS / Safari:</strong></p>
+            <ol style="margin-left: 20px;">
+                <li>Tippe auf das Teilen-Symbol (□↑) unten in der Mitte</li>
+                <li>Scrolle runter und wähle "Zum Home-Bildschirm"</li>
+                <li>Bestätige mit "Hinzufügen"</li>
+            </ol>
+            <button onclick="document.getElementById('installInstructions').style.display='none'" style="margin-top: 15px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Schließen
+            </button>
+        </div>
     </div>
 
     <div id="stats" class="stats"></div>
@@ -543,6 +567,39 @@
                     }
                 });
             }
+        }
+
+        // PWA Install Handling
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        const installInstructions = document.getElementById('installInstructions');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Verhindere automatischen Prompt
+            e.preventDefault();
+            deferredPrompt = e;
+            // Zeige Install-Button
+            installButton.style.display = 'inline-block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Zeige nativen Install-Dialog (Android/Chrome)
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`Installation: ${outcome}`);
+                deferredPrompt = null;
+                installButton.style.display = 'none';
+            } else {
+                // Zeige manuelle Anleitung (iOS/Safari)
+                installInstructions.style.display = 'block';
+            }
+        });
+
+        // Überprüfe ob bereits installiert
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('App läuft bereits als PWA');
+            installButton.style.display = 'none';
         }
 
         loadData();
