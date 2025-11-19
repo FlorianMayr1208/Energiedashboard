@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#4CAF50">
     <title>Energiedashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <style>
         * {
             margin: 0;
@@ -329,11 +330,13 @@
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map(e => e.datum.split(' ')[0]),
                     datasets: [
                         {
                             label: 'Strom (kWh)',
-                            data: chartData.map(e => e.strom_verbrauch !== null ? e.strom_verbrauch : null),
+                            data: chartData.map(e => ({
+                                x: e.datum,
+                                y: e.strom_verbrauch !== null ? e.strom_verbrauch : null
+                            })),
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102, 126, 234, 0.1)',
                             tension: 0.4,
@@ -341,7 +344,10 @@
                         },
                         {
                             label: 'Gas (kWh)',
-                            data: chartData.map(e => e.gas_verbrauch_kwh !== null ? e.gas_verbrauch_kwh : null),
+                            data: chartData.map(e => ({
+                                x: e.datum,
+                                y: e.gas_verbrauch_kwh !== null ? e.gas_verbrauch_kwh : null
+                            })),
                             borderColor: '#f093fb',
                             backgroundColor: 'rgba(240, 147, 251, 0.1)',
                             tension: 0.4,
@@ -357,8 +363,26 @@
                         }
                     },
                     scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'dd.MM.yyyy'
+                                },
+                                tooltipFormat: 'dd.MM.yyyy HH:mm'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Datum'
+                            }
+                        },
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Verbrauch (kWh)'
+                            }
                         }
                     }
                 }

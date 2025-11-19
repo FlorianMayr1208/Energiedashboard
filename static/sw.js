@@ -1,12 +1,13 @@
 // Service Worker für PWA mit Offline-Caching
-const CACHE_NAME = 'energiedashboard-v2';
+const CACHE_NAME = 'energiedashboard-v3';
 const urlsToCache = [
     '/',
     '/eingabe',
     '/manifest.json',
     '/static/icon-192.png',
     '/static/icon-512.png',
-    'https://cdn.jsdelivr.net/npm/chart.js'
+    'https://cdn.jsdelivr.net/npm/chart.js',
+    'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns'
 ];
 
 // Installation: Cache wichtige Dateien
