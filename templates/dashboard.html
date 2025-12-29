@@ -326,28 +326,71 @@
             }
 
             const chartData = eintraege.reverse(); // Älteste zuerst für Chart
+
+            // Normalisiere die Daten: Verteile den Verbrauch gleichmäßig auf die Tage zwischen Ablesungen
+            function normalizeChartData(entries, valueKey) {
+                const normalizedData = [];
+
+                for (let i = 0; i < entries.length; i++) {
+                    const current = entries[i];
+
+                    // Überspringe wenn kein Wert vorhanden
+                    if (current[valueKey] === null) continue;
+
+                    // Für den ersten Eintrag oder wenn es keinen Verbrauch gibt
+                    if (i === 0 || current[valueKey] === null) {
+                        continue;
+                    }
+
+                    // Finde den vorherigen Eintrag mit einem Wert
+                    let previousIndex = i - 1;
+                    while (previousIndex >= 0 && entries[previousIndex][valueKey.replace('_verbrauch', '').replace('_kwh', '')] === null) {
+                        previousIndex--;
+                    }
+
+                    if (previousIndex < 0) continue;
+
+                    const previous = entries[previousIndex];
+                    const currentDate = new Date(current.datum);
+                    const previousDate = new Date(previous.datum);
+
+                    // Berechne Tage zwischen Ablesungen
+                    const daysDiff = Math.max(1, Math.round((currentDate - previousDate) / (1000 * 60 * 60 * 24)));
+                    const dailyConsumption = current[valueKey] / daysDiff;
+
+                    // Erstelle einen Datenpunkt für jeden Tag
+                    for (let day = 1; day <= daysDiff; day++) {
+                        const date = new Date(previousDate);
+                        date.setDate(date.getDate() + day);
+                        normalizedData.push({
+                            x: date.toISOString().split('T')[0],
+                            y: dailyConsumption
+                        });
+                    }
+                }
+
+                return normalizedData;
+            }
+
+            const stromData = normalizeChartData(chartData, 'strom_verbrauch');
+            const gasData = normalizeChartData(chartData, 'gas_verbrauch_kwh');
+
             const ctx = document.getElementById('verbrauchChart').getContext('2d');
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     datasets: [
                         {
-                            label: 'Strom (kWh)',
-                            data: chartData.map(e => ({
-                                x: e.datum,
-                                y: e.strom_verbrauch !== null ? e.strom_verbrauch : null
-                            })),
+                            label: 'Strom (kWh/Tag)',
+                            data: stromData,
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102, 126, 234, 0.1)',
                             tension: 0.4,
                             spanGaps: true
                         },
                         {
-                            label: 'Gas (kWh)',
-                            data: chartData.map(e => ({
-                                x: e.datum,
-                                y: e.gas_verbrauch_kwh !== null ? e.gas_verbrauch_kwh : null
-                            })),
+                            label: 'Gas (kWh/Tag)',
+                            data: gasData,
                             borderColor: '#f093fb',
                             backgroundColor: 'rgba(240, 147, 251, 0.1)',
                             tension: 0.4,
@@ -370,7 +413,7 @@
                                 displayFormats: {
                                     day: 'dd.MM.yyyy'
                                 },
-                                tooltipFormat: 'dd.MM.yyyy HH:mm'
+                                tooltipFormat: 'dd.MM.yyyy'
                             },
                             title: {
                                 display: true,
@@ -381,7 +424,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Verbrauch (kWh)'
+                                text: 'Verbrauch pro Tag (kWh)'
                             }
                         }
                     }
